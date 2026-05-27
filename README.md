@@ -2,6 +2,15 @@
 
 Aplicación móvil de simulación de exámenes desarrollada con **React Native** y **Expo Go**. Esta aplicación permite a los estudiantes practicar con una base de datos de 400 preguntas a través de diferentes modos de estudio, llevar un registro de su progreso mediante un calendario y recibir notificaciones recordatorias.
 
+## 📲 Descarga Directa del APK (Android)
+
+Si solo deseas probar o usar la aplicación en tu celular Android sin configurar herramientas de desarrollo, puedes descargar el instalador directamente desde el repositorio:
+
+*   📥 **[Descargar Simulador.apk](Simulador.apk?raw=true)**
+
+> [!NOTE]
+> Al instalar el archivo APK en tu dispositivo, es posible que Android muestre una advertencia de seguridad o te solicite permitir la instalación desde fuentes desconocidas. Esto es completamente normal, ya que la aplicación está firmada con una clave de depuración y desarrollo (`debug.keystore`).
+
 ## Características Principales
 
 *   **Base de datos local:** Incluye 400 preguntas listas para practicar, sin necesidad de conexión a internet.
