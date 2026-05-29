@@ -4,7 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Rounded } from '../theme';
 import { getMonthName, getDayNames, getDaysInMonth, getFirstDayOfMonth } from '../utils/helpers';
 
-export default function CalendarGrid({ year, month, studyDays, onPrevMonth, onNextMonth }) {
+export default function CalendarGrid({ 
+  year, 
+  month, 
+  studyDays, 
+  complexExamDate, 
+  onPrevMonth, 
+  onNextMonth, 
+  onSelectDay 
+}) {
   const dayNames = getDayNames();
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
@@ -24,22 +32,37 @@ export default function CalendarGrid({ year, month, studyDays, onPrevMonth, onNe
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const isToday = dateStr === todayStr;
       const isStudied = studyDays.includes(dateStr);
+      const isExamDay = dateStr === complexExamDate;
 
       cells.push(
-        <View key={day} style={styles.dayCell}>
+        <TouchableOpacity 
+          key={day} 
+          style={styles.dayCell}
+          onPress={() => onSelectDay && onSelectDay(dateStr)}
+          activeOpacity={0.7}
+        >
           <View style={[
             styles.dayCircle,
             isToday && styles.dayCircleToday,
+            isExamDay && styles.dayCircleExam,
           ]}>
-            <Text style={[
-              styles.dayText,
-              isToday && styles.dayTextToday,
-            ]}>
-              {day}
-            </Text>
+            {isExamDay ? (
+              <Ionicons name="flag" size={16} color={Colors.white} />
+            ) : (
+              <Text style={[
+                styles.dayText,
+                isToday && styles.dayTextToday,
+                isExamDay && styles.dayTextExam,
+              ]}>
+                {day}
+              </Text>
+            )}
           </View>
-          {isStudied && <View style={styles.studiedDot} />}
-        </View>
+          <View style={styles.cellFooter}>
+            {isStudied && <View style={styles.studiedDot} />}
+            {isExamDay && <Text style={styles.examIndicatorText}>Exam</Text>}
+          </View>
+        </TouchableOpacity>
       );
     }
 
@@ -74,6 +97,18 @@ export default function CalendarGrid({ year, month, studyDays, onPrevMonth, onNe
       {/* Grid */}
       <View style={styles.grid}>
         {renderDays()}
+      </View>
+      
+      {/* Legend */}
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: Colors.calendarDot }]} />
+          <Text style={styles.legendText}>Día estudiado</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#E65100' }]} />
+          <Text style={styles.legendText}>Examen Complexivo</Text>
+        </View>
       </View>
     </View>
   );
@@ -143,7 +178,7 @@ const styles = StyleSheet.create({
   dayCell: {
     width: '14.285%',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   dayCircle: {
     width: 36,
@@ -155,6 +190,9 @@ const styles = StyleSheet.create({
   dayCircleToday: {
     backgroundColor: Colors.primary,
   },
+  dayCircleExam: {
+    backgroundColor: '#E65100', // Beautiful crimson-orange for the target exam
+  },
   dayText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
@@ -165,11 +203,52 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'Inter_700Bold',
   },
+  dayTextExam: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontFamily: 'Inter_700Bold',
+  },
+  cellFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    marginTop: 2,
+    height: 12,
+  },
   studiedDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: Colors.calendarDot,
-    marginTop: 2,
+  },
+  examIndicatorText: {
+    fontSize: 8,
+    color: '#E65100',
+    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.surfaceContainerHigh,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    color: Colors.textSecondary,
   },
 });

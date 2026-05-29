@@ -15,6 +15,7 @@ import ModoRepasoSetupScreen from '../screens/ModoRepasoSetupScreen';
 import ModoRepasoStudyScreen from '../screens/ModoRepasoStudyScreen';
 import ModoFijoSetupScreen from '../screens/ModoFijoSetupScreen';
 import ResultsScreen from '../screens/ResultsScreen';
+import ModoRefuerzoScreen from '../screens/ModoRefuerzoScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -49,6 +50,10 @@ function DashboardStack() {
       <Stack.Screen
         name="ModoFijoSetup"
         component={ModoFijoSetupScreen}
+      />
+      <Stack.Screen
+        name="ModoRefuerzo"
+        component={ModoRefuerzoScreen}
       />
       <Stack.Screen
         name="Results"

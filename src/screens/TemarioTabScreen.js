@@ -1,17 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Switch, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Spacing, Rounded } from '../theme';
 import QUESTIONS from '../data/questions';
+import { getQuestionHistory } from '../services/storage';
 
 export default function TemarioTabScreen() {
   const [showOnlyCorrect, setShowOnlyCorrect] = useState(false);
+  const [historyMap, setHistoryMap] = useState({});
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadHistory = async () => {
+        const history = await getQuestionHistory();
+        setHistoryMap(history);
+      };
+      loadHistory();
+    }, [])
+  );
 
   const renderItem = ({ item, index }) => {
+    const attempts = historyMap[item.id] || [];
+    const correctCount = attempts.filter(x => x === true).length;
+    const accuracy = attempts.length > 0 ? (correctCount / attempts.length) * 100 : 0;
+
+    // Dynamically calculate progress bar color
+    // closer to 100% -> Green, closer to 0% -> Red
+    let barColor = Colors.error;
+    if (accuracy >= 80) {
+      barColor = Colors.success;
+    } else if (accuracy >= 50) {
+      barColor = Colors.secondary; // yellow/orange
+    }
+
     return (
       <View style={styles.card}>
         <View style={styles.headerRow}>
           <Text style={styles.questionNumber}>Pregunta {index + 1}</Text>
+          
+          {attempts.length > 0 && (
+            <View style={styles.progressBadge}>
+              <Text style={[styles.progressTextBadge, { color: barColor }]}>
+                {accuracy.toFixed(0)}% Éxito
+              </Text>
+              <View style={styles.progressBarWrapper}>
+                <View 
+                  style={[
+                    styles.progressBarFill, 
+                    { width: `${accuracy}%`, backgroundColor: barColor }
+                  ]} 
+                />
+              </View>
+            </View>
+          )}
         </View>
         <Text style={styles.questionText}>{item.enunciado}</Text>
         
@@ -135,7 +177,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   headerRow: {
-    marginBottom: Spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   questionNumber: {
     fontFamily: 'Inter_600SemiBold',
@@ -143,6 +188,27 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+  },
+  progressBadge: {
+    alignItems: 'flex-end',
+    width: 120,
+  },
+  progressTextBadge: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  progressBarWrapper: {
+    width: '100%',
+    height: 6,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   questionText: {
     fontFamily: 'Inter_500Medium',

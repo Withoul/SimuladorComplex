@@ -1,11 +1,11 @@
 export const Colors = {
-  primary: '#441F6F',
-  primaryDark: '#2E0159',
-  primaryLight: '#714D9E',
-  primaryContainer: '#441F6F',
+  primary: '#2622BD',
+  primaryDark: '#131370',
+  primaryLight: '#5C59CE',
+  primaryContainer: '#131370',
   onPrimary: '#FFFFFF',
-  onPrimaryContainer: '#B18AE1',
-  inversePrimary: '#DAB9FF',
+  onPrimaryContainer: '#FFFFFF',
+  inversePrimary: '#C9C8EF',
 
   secondary: '#FAC70F',
   secondaryDark: '#755B00',
@@ -40,13 +40,13 @@ export const Colors = {
   textOnDark: '#FFFFFF',
 
   // Calendar specific
-  calendarStudied: '#FAC70F',
-  calendarToday: '#441F6F',
-  calendarDot: '#FAC70F',
+  calendarStudied: '#2622BD',
+  calendarToday: '#2622BD',
+  calendarDot: '#2622BD',
 
   // Transparent overlays
   overlay: 'rgba(0, 0, 0, 0.5)',
-  primaryOverlay: 'rgba(68, 31, 111, 0.08)',
+  primaryOverlay: 'rgba(38, 34, 189, 0.08)',
   secondaryOverlay: 'rgba(250, 199, 15, 0.15)',
 
   white: '#FFFFFF',

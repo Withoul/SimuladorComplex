@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, StatusBar, Modal,
-  TextInput, TouchableOpacity, Animated
+  TextInput, TouchableOpacity, Alert
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,8 +10,11 @@ import ModeCard from '../components/ModeCard';
 import StatCard from '../components/StatCard';
 import {
   getUserName, saveUserName, getPointsToday,
-  getCurrentStreak
+  getCurrentStreak, getNotificationSettingsComplex, saveNotificationSettingsComplex
 } from '../services/storage';
+import {
+  requestNotificationPermissions, scheduleStudyReminder, cancelAllReminders
+} from '../services/notifications';
 
 export default function DashboardScreen({ navigation }) {
   const [userName, setUserName] = useState('');
@@ -19,6 +22,8 @@ export default function DashboardScreen({ navigation }) {
   const [nameInput, setNameInput] = useState('');
   const [pointsToday, setPointsToday] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState(null);
 
   useEffect(() => {
     checkUserName();
@@ -51,6 +56,47 @@ export default function DashboardScreen({ navigation }) {
     const streak = await getCurrentStreak();
     setPointsToday(points);
     setCurrentStreak(streak);
+
+    const notif = await getNotificationSettingsComplex();
+    setNotificationSettings(notif);
+    setNotificationsEnabled(notif.enabled);
+  };
+
+  const handleToggleNotifications = async () => {
+    const nextVal = !notificationsEnabled;
+    if (nextVal) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(
+          'Permisos requeridos',
+          'Necesitas otorgar permisos de notificaciones para activar los recordatorios.',
+        );
+        return;
+      }
+      
+      const interval = notificationSettings?.intervalHours || 4;
+      await scheduleStudyReminder(interval);
+      
+      const newSettings = {
+        ...notificationSettings,
+        enabled: true,
+        intervalHours: interval
+      };
+      setNotificationSettings(newSettings);
+      await saveNotificationSettingsComplex(newSettings);
+      setNotificationsEnabled(true);
+      Alert.alert('Recordatorios activos', 'Se han activado los recordatorios de estudio.');
+    } else {
+      await cancelAllReminders();
+      const newSettings = {
+        ...notificationSettings,
+        enabled: false
+      };
+      setNotificationSettings(newSettings);
+      await saveNotificationSettingsComplex(newSettings);
+      setNotificationsEnabled(false);
+      Alert.alert('Recordatorios desactivados', 'Se han desactivado los recordatorios de estudio.');
+    }
   };
 
   return (
@@ -94,8 +140,19 @@ export default function DashboardScreen({ navigation }) {
             </Text>
             <Text style={styles.subtitle}>¿Qué desafío conquistaremos hoy?</Text>
           </View>
-          <TouchableOpacity style={styles.notifButton} onPress={() => navigation.navigate('Profile')}>
-            <Ionicons name="notifications-outline" size={24} color={Colors.primary} />
+          <TouchableOpacity 
+            style={[
+              styles.notifButton, 
+              notificationsEnabled && styles.notifButtonActive
+            ]} 
+            onPress={handleToggleNotifications}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name={notificationsEnabled ? "notifications" : "notifications-outline"} 
+              size={24} 
+              color={notificationsEnabled ? Colors.white : Colors.primary} 
+            />
           </TouchableOpacity>
         </View>
 
@@ -118,7 +175,7 @@ export default function DashboardScreen({ navigation }) {
           title="Modo Racha Infinita"
           subtitle="Responde hasta fallar"
           iconName="infinite"
-          iconBgColor="rgba(218, 185, 255, 0.25)"
+          iconBgColor="rgba(38, 34, 189, 0.12)"
           onPress={() => navigation.navigate('RachaInfinita')}
         />
 
@@ -126,7 +183,7 @@ export default function DashboardScreen({ navigation }) {
           title="Modo Racha por Tiempo"
           subtitle="15 segundos por pregunta"
           iconName="timer-outline"
-          iconBgColor="rgba(228, 228, 228, 0.5)"
+          iconBgColor="rgba(92, 89, 206, 0.15)"
           onPress={() => navigation.navigate('RachaTiempo')}
         />
 
@@ -139,10 +196,18 @@ export default function DashboardScreen({ navigation }) {
         />
 
         <ModeCard
+          title="Modo Refuerzo"
+          subtitle="Estudia y responde preguntas erradas"
+          iconName="barbell-outline"
+          iconBgColor="rgba(230, 81, 0, 0.15)"
+          onPress={() => navigation.navigate('ModoRefuerzo')}
+        />
+
+        <ModeCard
           title="Estudio por Temario"
           subtitle="Repasa y luego evalúate"
           iconName="book-outline"
-          iconBgColor="rgba(68, 31, 111, 0.15)"
+          iconBgColor="rgba(38, 34, 189, 0.12)"
           onPress={() => navigation.navigate('ModoRepasoSetup')}
         />
 
@@ -206,6 +271,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
+  },
+  notifButtonActive: {
+    backgroundColor: Colors.primary,
   },
   statsRow: {
     flexDirection: 'row',

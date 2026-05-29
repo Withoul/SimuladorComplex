@@ -6,7 +6,7 @@ import QuestionCard from '../components/QuestionCard';
 import TimerBar from '../components/TimerBar';
 import QUESTIONS from '../data/questions';
 import { shuffleArray, prepareQuestion } from '../utils/helpers';
-import { addPoints, markStudyDay, updateStreak, addToStats } from '../services/storage';
+import { addPoints, markStudyDay, updateStreak, addToStats, recordQuestionAnswer } from '../services/storage';
 
 const TIME_LIMIT = 15;
 
@@ -51,6 +51,9 @@ export default function RachaTiempoScreen({ navigation }) {
       setLastCorrectAnswer(prepared.shuffledOptions[prepared.correctIndex]);
     }
     setGameOver(true);
+    if (questions[currentIndex]) {
+      await recordQuestionAnswer(questions[currentIndex].id, false);
+    }
     await addToStats(streak, streak);
     await markStudyDay();
     await updateStreak();
@@ -59,6 +62,10 @@ export default function RachaTiempoScreen({ navigation }) {
   const handleAnswer = async (isCorrect, correctText) => {
     setIsAnswering(true);
     clearInterval(timerRef.current);
+
+    if (questions[currentIndex]) {
+      await recordQuestionAnswer(questions[currentIndex].id, isCorrect);
+    }
 
     if (isCorrect) {
       const newStreak = streak + 1;

@@ -11,6 +11,11 @@ const KEYS = {
   TOTAL_CORRECT: '@simulador_total_correct',
   NOTIFICATION_INTERVAL: '@simulador_notification_interval',
   NOTIFICATIONS_ENABLED: '@simulador_notifications_enabled',
+  QUESTION_HISTORY: '@simulador_question_history',
+  STUDY_TIME: '@simulador_study_time',
+  COMPLEX_EXAM_DATE: '@simulador_complex_exam_date',
+  PROFILE_IMAGE: '@simulador_profile_image',
+  NOTIFICATION_SETTINGS_COMPLEX: '@simulador_notification_settings_complex',
 };
 
 // User Name
@@ -144,4 +149,88 @@ export const getNotificationSettings = async () => {
 export const saveNotificationSettings = async (enabled, intervalHours) => {
   await AsyncStorage.setItem(KEYS.NOTIFICATIONS_ENABLED, enabled.toString());
   await AsyncStorage.setItem(KEYS.NOTIFICATION_INTERVAL, intervalHours.toString());
+};
+
+// Question History per Question (saves last 10 attempts)
+export const getQuestionHistory = async () => {
+  const data = await AsyncStorage.getItem(KEYS.QUESTION_HISTORY);
+  return data ? JSON.parse(data) : {};
+};
+
+export const recordQuestionAnswer = async (questionId, isCorrect) => {
+  const history = await getQuestionHistory();
+  const qHistory = history[questionId] || [];
+  qHistory.push(isCorrect);
+  let updatedHistory;
+  if (qHistory.length > 10) {
+    updatedHistory = qHistory.slice(-10);
+  } else {
+    updatedHistory = qHistory;
+  }
+  history[questionId] = updatedHistory;
+  await AsyncStorage.setItem(KEYS.QUESTION_HISTORY, JSON.stringify(history));
+  return history;
+};
+
+// Study Time Tracking (foreground study time in seconds per day)
+export const getStudyTime = async () => {
+  const data = await AsyncStorage.getItem(KEYS.STUDY_TIME);
+  return data ? JSON.parse(data) : {};
+};
+
+export const addStudyTime = async (seconds) => {
+  const today = new Date().toISOString().split('T')[0];
+  const timeData = await getStudyTime();
+  timeData[today] = (timeData[today] || 0) + seconds;
+  await AsyncStorage.setItem(KEYS.STUDY_TIME, JSON.stringify(timeData));
+  return timeData;
+};
+
+// Complex Exam Date (stored as "YYYY-MM-DD")
+export const getComplexExamDate = async () => {
+  return await AsyncStorage.getItem(KEYS.COMPLEX_EXAM_DATE);
+};
+
+export const saveComplexExamDate = async (date) => {
+  if (date) {
+    await AsyncStorage.setItem(KEYS.COMPLEX_EXAM_DATE, date);
+  } else {
+    await AsyncStorage.removeItem(KEYS.COMPLEX_EXAM_DATE);
+  }
+};
+
+// Profile Image (Base64 URI or local image path)
+export const getProfileImage = async () => {
+  return await AsyncStorage.getItem(KEYS.PROFILE_IMAGE);
+};
+
+export const saveProfileImage = async (imageUri) => {
+  if (imageUri) {
+    await AsyncStorage.setItem(KEYS.PROFILE_IMAGE, imageUri);
+  } else {
+    await AsyncStorage.removeItem(KEYS.PROFILE_IMAGE);
+  }
+};
+
+// Advanced Notification Settings
+export const getNotificationSettingsComplex = async () => {
+  const data = await AsyncStorage.getItem(KEYS.NOTIFICATION_SETTINGS_COMPLEX);
+  if (data) {
+    return JSON.parse(data);
+  }
+  // Default legacy settings compatibility
+  const legacy = await getNotificationSettings();
+  return {
+    enabled: legacy.enabled,
+    type: 'interval', // 'interval' | 'daily'
+    intervalHours: legacy.intervalHours,
+    dailyHour: 9,
+    dailyMinute: 0,
+  };
+};
+
+export const saveNotificationSettingsComplex = async (settings) => {
+  await AsyncStorage.setItem(KEYS.NOTIFICATION_SETTINGS_COMPLEX, JSON.stringify(settings));
+  // Keep legacy settings synced for safety/backward compatibility
+  await saveNotificationSettings(settings.enabled, settings.intervalHours || 4);
 };

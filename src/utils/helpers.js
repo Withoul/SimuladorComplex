@@ -10,13 +10,21 @@ export function shuffleArray(array) {
   return shuffled;
 }
 
-/**
- * Select N random questions from the pool
- */
-export function selectRandomQuestions(questions, count) {
+export function selectRandomQuestions(questions, count, seenQuestionIds = []) {
   const n = Math.min(count, questions.length);
-  const shuffled = shuffleArray(questions);
-  return shuffled.slice(0, n);
+  
+  // Separate unseen and seen questions
+  const unseen = questions.filter(q => !seenQuestionIds.includes(q.id));
+  const seen = questions.filter(q => seenQuestionIds.includes(q.id));
+  
+  // Shuffle both subsets
+  const shuffledUnseen = shuffleArray(unseen);
+  const shuffledSeen = shuffleArray(seen);
+  
+  // Merge, putting unseen first
+  const merged = [...shuffledUnseen, ...shuffledSeen];
+  
+  return merged.slice(0, n);
 }
 
 /**

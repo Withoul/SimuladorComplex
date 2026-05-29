@@ -92,6 +92,30 @@ export async function cancelAllReminders() {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
+export async function scheduleDailyStudyReminder(hour = 9, minute = 0) {
+  await cancelAllReminders();
+  
+  const randomMessage =
+    MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'SimuladorComplex',
+      body: randomMessage,
+      sound: true,
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    },
+    trigger: {
+      hour,
+      minute,
+      repeats: true,
+    },
+    identifier: NOTIFICATION_IDENTIFIER,
+  });
+
+  return identifier;
+}
+
 export async function getScheduledNotifications() {
   return await Notifications.getAllScheduledNotificationsAsync();
 }

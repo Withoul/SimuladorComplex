@@ -5,7 +5,7 @@ import { Colors, Spacing, Rounded } from '../theme';
 import QuestionCard from '../components/QuestionCard';
 import QUESTIONS from '../data/questions';
 import { shuffleArray, prepareQuestion } from '../utils/helpers';
-import { addPoints, markStudyDay, updateStreak, addToStats } from '../services/storage';
+import { addPoints, markStudyDay, updateStreak, addToStats, recordQuestionAnswer } from '../services/storage';
 
 export default function RachaInfinitaScreen({ navigation }) {
   const [questions, setQuestions] = useState([]);
@@ -22,6 +22,10 @@ export default function RachaInfinitaScreen({ navigation }) {
   }, []);
 
   const handleAnswer = async (isCorrect, correctText) => {
+    if (questions[currentIndex]) {
+      await recordQuestionAnswer(questions[currentIndex].id, isCorrect);
+    }
+
     if (isCorrect) {
       const newStreak = streak + 1;
       setStreak(newStreak);

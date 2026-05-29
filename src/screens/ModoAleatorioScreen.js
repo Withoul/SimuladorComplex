@@ -9,7 +9,7 @@ import QuestionCard from '../components/QuestionCard';
 import ProgressBar from '../components/ProgressBar';
 import QUESTIONS from '../data/questions';
 import { selectRandomQuestions, prepareQuestion } from '../utils/helpers';
-import { addPoints, markStudyDay, updateStreak, addToStats } from '../services/storage';
+import { addPoints, markStudyDay, updateStreak, addToStats, getQuestionHistory, recordQuestionAnswer } from '../services/storage';
 
 const PRESET_COUNTS = [10, 20, 30, 50, 100, 400];
 
@@ -27,20 +27,32 @@ export default function ModoAleatorioScreen({ route, navigation }) {
 
   // If preset questions are passed, initialize them immediately
   useEffect(() => {
-    if (presetQuestions && presetQuestions.length > 0) {
-      const selected = isSequential ? [...presetQuestions] : selectRandomQuestions([...presetQuestions], presetQuestions.length);
-      setQuestions(selected);
-      setCurrentIndex(0);
-      setCorrect(0);
-      setErrors([]);
-      setPrepared(prepareQuestion(selected[0]));
-      setPhase('quiz');
-    }
+    const initPreset = async () => {
+      if (presetQuestions && presetQuestions.length > 0) {
+        let selected;
+        if (isSequential) {
+          selected = [...presetQuestions];
+        } else {
+          const history = await getQuestionHistory();
+          const seenIds = Object.keys(history).map(Number);
+          selected = selectRandomQuestions([...presetQuestions], presetQuestions.length, seenIds);
+        }
+        setQuestions(selected);
+        setCurrentIndex(0);
+        setCorrect(0);
+        setErrors([]);
+        setPrepared(prepareQuestion(selected[0]));
+        setPhase('quiz');
+      }
+    };
+    initPreset();
   }, [presetQuestions, isSequential]);
 
-  const startQuiz = () => {
+  const startQuiz = async () => {
     const count = customCount ? Math.min(parseInt(customCount) || 20, 400) : questionCount;
-    const selected = selectRandomQuestions([...QUESTIONS], count);
+    const history = await getQuestionHistory();
+    const seenIds = Object.keys(history).map(Number);
+    const selected = selectRandomQuestions([...QUESTIONS], count, seenIds);
     setQuestions(selected);
     setCurrentIndex(0);
     setCorrect(0);
@@ -50,6 +62,10 @@ export default function ModoAleatorioScreen({ route, navigation }) {
   };
 
   const handleAnswer = async (isCorrect, correctText) => {
+    if (questions[currentIndex]) {
+      await recordQuestionAnswer(questions[currentIndex].id, isCorrect);
+    }
+
     if (isCorrect) {
       setCorrect((c) => c + 1);
       await addPoints(5);
